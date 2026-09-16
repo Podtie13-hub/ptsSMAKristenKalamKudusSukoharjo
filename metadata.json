@@ -1,0 +1,6 @@
+{
+  "name": "Sistem Rapor PTS SMA Kristen Kalam Kudus Sukoharjo",
+  "description": "Sistem Penilaian Tengah Semester (PTS) SMA Kristen Kalam Kudus Sukoharjo dengan manajemen akademik, input nilai guru mapel, rekapitulasi nilai wali kelas, serta cetak rapor per siswa dan per kelas format PDF.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
