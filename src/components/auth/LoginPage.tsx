@@ -70,7 +70,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       }
 
       // Fallback check for podtie13 / Zionathan123
-      if (cleanUser === 'podtie13' && cleanPass === 'Zionathan123') {
+      if (cleanUser === 'masukan ID' && cleanPass === 'Masukkan Password') {
         onLogin({
           role: 'admin',
           username: 'podtie13',
