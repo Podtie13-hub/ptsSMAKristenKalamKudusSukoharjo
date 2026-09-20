@@ -25,7 +25,6 @@ import { PortalGuru } from './components/guru/PortalGuru';
 import { LoginPage } from './components/auth/LoginPage';
 import PrintPreviewModal from './components/rapor/PrintPreviewModal';
 import SqlExportModal from './components/sql/SqlExportModal';
-import { PhpPackageModal } from './components/admin/PhpPackageModal';
 import RaporDocument from './components/rapor/RaporDocument';
 
 export default function App() {
@@ -64,14 +63,13 @@ export default function App() {
     StorageService.getAdminUsers()
   );
 
-  // Auth Session state (null = not logged in, otherwise holds user credentials and role)
+  // Auth Session state
   const [authSession, setAuthSession] = useState<AuthSession | null>(() =>
     StorageService.getAuthSession()
   );
 
   // Modals state
   const [isSqlModalOpen, setIsSqlModalOpen] = useState(false);
-  const [isPhpModalOpen, setIsPhpModalOpen] = useState(false);
   const [previewModalConfig, setPreviewModalConfig] = useState<{
     isOpen: boolean;
     mode: 'single' | 'class';
@@ -220,10 +218,9 @@ export default function App() {
           schoolProfile={schoolProfile}
           adminUsers={adminUsers}
           onLogin={handleLogin}
-          onOpenPhpPackage={() => setIsPhpModalOpen(true)}
+          onOpenPhpPackage={() => {}}
         />
 
-        {/* SQL Export Modal accessible from anywhere if needed */}
         {isSqlModalOpen && (
           <SqlExportModal
             isOpen={isSqlModalOpen}
@@ -235,28 +232,7 @@ export default function App() {
             assignments={assignments}
             students={students}
             grades={grades}
-            onOpenPhpPackage={() => {
-              setIsSqlModalOpen(false);
-              setIsPhpModalOpen(true);
-            }}
-          />
-        )}
-
-        {/* PHP & MySQL Package Modal accessible from login if needed */}
-        {isPhpModalOpen && (
-          <PhpPackageModal
-            isOpen={isPhpModalOpen}
-            onClose={() => setIsPhpModalOpen(false)}
-            academicYears={academicYears}
-            classes={classes}
-            subjects={subjects}
-            teachers={teachers}
-            assignments={assignments}
-            students={students}
-            grades={grades}
-            evaluations={evaluations}
-            printSettings={printSettings}
-            schoolProfile={schoolProfile}
+            onOpenPhpPackage={() => {}}
           />
         )}
       </div>
@@ -266,19 +242,19 @@ export default function App() {
   // IF USER IS LOGGED IN: Render Workspace
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col selection:bg-[#1E3A6C] selection:text-white">
-      {/* 1. Official Header with Brand Identity, User Badge, and Logout */}
+      {/* 1. Header */}
       <Header
         authSession={authSession}
         onLogout={handleLogout}
         activeAcademicYear={activeAcademicYear}
         onOpenSqlModal={() => setIsSqlModalOpen(true)}
-        onOpenPhpModal={() => setIsPhpModalOpen(true)}
+        onOpenPhpModal={() => {}}
         schoolProfile={schoolProfile}
         teachers={teachers}
         classes={classes}
       />
 
-      {/* 2. Main Workspace Body (Visible on screen, hidden on print) */}
+      {/* 2. Main Workspace Body */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 no-print">
         {authSession.role === 'admin' && (
           <AdminDashboard
@@ -303,7 +279,7 @@ export default function App() {
             onUpdatePrintSettings={setPrintSettings}
             onResetData={handleResetData}
             onOpenSqlModal={() => setIsSqlModalOpen(true)}
-            onOpenPhpModal={() => setIsPhpModalOpen(true)}
+            onOpenPhpModal={() => {}}
             onImpersonateTeacher={handleImpersonateTeacher}
           />
         )}
@@ -341,14 +317,6 @@ export default function App() {
             <span>•</span>
             <button
               type="button"
-              onClick={() => setIsPhpModalOpen(true)}
-              className="text-emerald-700 hover:underline font-bold"
-            >
-              📦 Paket PHP XAMPP
-            </button>
-            <span>•</span>
-            <button
-              type="button"
               onClick={() => setIsSqlModalOpen(true)}
               className="text-[#1E3A6C] hover:underline font-semibold"
             >
@@ -378,7 +346,7 @@ export default function App() {
         />
       )}
 
-      {/* 5. SQL & PHP Database Export Modal */}
+      {/* 5. SQL Database Export Modal */}
       {isSqlModalOpen && (
         <SqlExportModal
           isOpen={isSqlModalOpen}
@@ -390,32 +358,11 @@ export default function App() {
           assignments={assignments}
           students={students}
           grades={grades}
-          onOpenPhpPackage={() => {
-            setIsSqlModalOpen(false);
-            setIsPhpModalOpen(true);
-          }}
+          onOpenPhpPackage={() => {}}
         />
       )}
 
-      {/* 5b. Dedicated PHP + MySQL Package Modal for XAMPP */}
-      {isPhpModalOpen && (
-        <PhpPackageModal
-          isOpen={isPhpModalOpen}
-          onClose={() => setIsPhpModalOpen(false)}
-          academicYears={academicYears}
-          classes={classes}
-          subjects={subjects}
-          teachers={teachers}
-          assignments={assignments}
-          students={students}
-          grades={grades}
-          evaluations={evaluations}
-          printSettings={printSettings}
-          schoolProfile={schoolProfile}
-        />
-      )}
-
-      {/* 6. Print-Only Dedicated Area (Rendered when user triggers window.print()) */}
+      {/* 6. Print-Only Dedicated Area */}
       <div className="print-only">
         <RaporDocument
           students={studentsToPrint}
