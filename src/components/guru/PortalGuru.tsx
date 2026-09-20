@@ -332,6 +332,46 @@ export const PortalGuru: React.FC<PortalGuruProps> = ({
   // --- TAB 2: WALI KELAS STATES & LOGIC ---
   const homeroomStudents = students.filter((s) => s.classId === homeroomClass?.id);
 
+  // Hanya ambil mata pelajaran yang disetting diajarkan di kelas perwalian ini (atau yang memiliki nilai terinput)
+  const homeroomClassSubjects = React.useMemo(() => {
+    if (!homeroomClass) return [];
+    
+    // 1. Mapel yang diset ada guru pengampunya di kelas perwalian ini
+    const assignedSubIds = new Set<string>();
+    assignments.forEach((a) => {
+      if (
+        a.classId === homeroomClass.id &&
+        (!a.academicYearId || a.academicYearId === activeAcademicYear.id)
+      ) {
+        assignedSubIds.add(a.subjectId);
+      }
+    });
+
+    // 2. Mapel yang sudah memiliki nilai diinput oleh guru untuk siswa di kelas ini
+    const studentIdsInHomeroom = new Set(homeroomStudents.map((s) => s.id));
+    const gradedSubIds = new Set<string>();
+    grades.forEach((g) => {
+      if (
+        studentIdsInHomeroom.has(g.studentId) &&
+        g.academicYearId === activeAcademicYear.id &&
+        g.semester === activeAcademicYear.semester &&
+        g.score !== undefined &&
+        g.score > 0
+      ) {
+        gradedSubIds.add(g.subjectId);
+      }
+    });
+
+    // Saring mata pelajaran
+    const filtered = subjects.filter(
+      (s) => assignedSubIds.has(s.id) || gradedSubIds.has(s.id)
+    );
+
+    return filtered.length > 0
+      ? filtered
+      : (assignedSubIds.size > 0 || gradedSubIds.size > 0 ? filtered : subjects);
+  }, [homeroomClass, assignments, activeAcademicYear.id, activeAcademicYear.semester, homeroomStudents, grades, subjects]);
+
   // Print Configuration form states
   const [localPrintDate, setLocalPrintDate] = useState(printSettings.printDate);
   const [localKepsekName, setLocalKepsekName] = useState(printSettings.principalName);
@@ -369,13 +409,14 @@ export const PortalGuru: React.FC<PortalGuruProps> = ({
     setTimeout(() => setWaliSuccessMsg(null), 3500);
   };
 
-  // Calculate statistics for students in homeroom class
+  // Calculate statistics for students in homeroom class (dihitung berbasis homeroomClassSubjects)
   const homeroomStudentStats = homeroomStudents.map((student) => {
     const studentGrades = grades.filter(
       (g) =>
         g.studentId === student.id &&
         g.academicYearId === activeAcademicYear.id &&
-        g.semester === activeAcademicYear.semester
+        g.semester === activeAcademicYear.semester &&
+        homeroomClassSubjects.some((sub) => sub.id === g.subjectId)
     );
 
     let total = 0;
@@ -388,7 +429,10 @@ export const PortalGuru: React.FC<PortalGuruProps> = ({
     });
 
     const average = count > 0 ? Number((total / count).toFixed(1)) : 0;
-    const completeness = subjects.length > 0 ? Math.round((count / subjects.length) * 100) : 0;
+    const completeness =
+      homeroomClassSubjects.length > 0
+        ? Math.round((count / homeroomClassSubjects.length) * 100)
+        : 0;
 
     return {
       student,
@@ -824,8 +868,9 @@ export const PortalGuru: React.FC<PortalGuruProps> = ({
               Pantau kesiapan nilai dari masing-masing guru pengampu sebelum mencetak rapor siswa.
             </p>
 
+            {/* Grid Mapel yang Sesuai Settingan / Yang Memiliki Nilai */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-              {subjects.map((sub) => {
+              {homeroomClassSubjects.map((sub) => {
                 const asg = assignments.find(
                   (a) => a.classId === homeroomClass.id && a.subjectId === sub.id
                 );
@@ -923,7 +968,9 @@ export const PortalGuru: React.FC<PortalGuruProps> = ({
                         item.student.nis.includes(searchWaliStudent)
                     )
                     .map((item, index) => {
-                      const isComplete = item.count === subjects.length && subjects.length > 0;
+                      const isComplete =
+                        item.count === homeroomClassSubjects.length &&
+                        homeroomClassSubjects.length > 0;
 
                       return (
                         <tr
@@ -948,7 +995,7 @@ export const PortalGuru: React.FC<PortalGuruProps> = ({
                                   : 'bg-amber-50 text-amber-700 border border-amber-200'
                               }`}
                             >
-                              {item.count} / {subjects.length} mapel
+                              {item.count} / {homeroomClassSubjects.length} mapel
                             </span>
                           </td>
                           <td className="py-2.5 px-3 text-center font-bold text-sm text-[#1E3A6C]">
@@ -970,9 +1017,10 @@ export const PortalGuru: React.FC<PortalGuruProps> = ({
                             {/* Cetak Rapor Per Siswa */}
                             <button
                               type="button"
-                              onClick={() =>
-                                onOpenPreviewModal('single', index, homeroomClass.id)
-                              }
+                              onClick={() => {
+                                const realIdx = homeroomStudents.findIndex((s) => s.id === item.student.id);
+                                onOpenPreviewModal('single', realIdx >= 0 ? realIdx : 0, homeroomClass.id);
+                              }}
                               className="inline-flex items-center gap-1.5 bg-[#1E3A6C] hover:bg-[#162B52] text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-2xs transition-colors"
                               title="Cetak Rapor Siswa Ini"
                             >
