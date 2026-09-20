@@ -42,7 +42,7 @@ export const SingleStudentRapor: React.FC<{
   printSettings,
   schoolProfile,
 }) => {
-  // Get custom subject group titles from printSettings
+  // Ambil judul kelompok mapel kustom dari printSettings
   const titleKelA =
     printSettings.subjectGroupTitles?.['Kelompok A (Umum)'] ||
     'Kelompok A (Muatan Umum / Wajib)';
@@ -53,12 +53,12 @@ export const SingleStudentRapor: React.FC<{
     printSettings.subjectGroupTitles?.['Kelompok C (Peminatan)'] ||
     'Kelompok C (Peminatan / Pilihan)';
 
-  // Sort subjects by category and orderIndex
+  // Urutkan mapel berdasarkan kategori dan nomor urut
   const kelA = subjects.filter((s) => s.category === 'Kelompok A (Umum)').sort((a, b) => a.orderIndex - b.orderIndex);
   const kelB = subjects.filter((s) => s.category === 'Kelompok B (Umum)').sort((a, b) => a.orderIndex - b.orderIndex);
   const kelC = subjects.filter((s) => s.category === 'Kelompok C (Peminatan)').sort((a, b) => a.orderIndex - b.orderIndex);
 
-  // Student grades for this academic year & semester
+  // Nilai siswa untuk tahun akademik & semester aktif
   const studentGrades = grades.filter(
     (g) =>
       g.studentId === student.id &&
@@ -66,22 +66,7 @@ export const SingleStudentRapor: React.FC<{
       g.semester === academicYear.semester
   );
 
-  // Calculate statistics
-  let totalScore = 0;
-  let subjectCount = 0;
-
-  subjects.forEach((sub) => {
-    const g = studentGrades.find((grade) => grade.subjectId === sub.id);
-    if (g && g.score !== undefined && g.score > 0) {
-      totalScore += g.score;
-      subjectCount += 1;
-    }
-  });
-
-  const averageScore = subjectCount > 0 ? (totalScore / subjectCount).toFixed(1) : '-';
-
-  // Paper margin inline style from printSettings
-  // default marginTop provides clearance for the school's pre-printed letterhead paper
+  // Margin kertas dari printSettings (default paddingTop 40mm untuk clearance kertas berkop resmi)
   const marginStyle: React.CSSProperties = {
     paddingTop: `${printSettings.marginTop !== undefined ? printSettings.marginTop : 40}mm`,
     paddingBottom: `${printSettings.marginBottom || 15}mm`,
@@ -98,11 +83,6 @@ export const SingleStudentRapor: React.FC<{
         minHeight: printSettings.paperSize === 'F4' ? '330mm' : '297mm',
       }}
     >
-      {/* 
-        KOP SURAT DIHILANGKAN SESUAI PERMINTAAN KARENA SUDAH MEMILIKI KERTAS BERKOP RESMI DARI SEKOLAH.
-        Ruang atas diatur melalui pengaturan marginTop (default 40mm).
-      */}
-
       {/* 1. JUDUL RAPOR HASIL BELAJAR SISWA TENGAH SEMESTER */}
       <div className="text-center mb-3">
         <h1 className="text-[13.5px] font-black uppercase tracking-wide underline decoration-1 underline-offset-4">
@@ -113,7 +93,7 @@ export const SingleStudentRapor: React.FC<{
         </div>
       </div>
 
-      {/* 2. BIODATA SISWA (IDENTITAS: HANYA FASE, HILANGKAN PEMINATAN) */}
+      {/* 2. BIODATA SISWA (IDENTITAS RESMI) */}
       <div className="grid grid-cols-2 text-[10.5px] gap-x-6 gap-y-1 my-3 px-1 leading-relaxed border-b border-slate-300 pb-2">
         <div className="space-y-1">
           <div className="flex">
@@ -222,15 +202,7 @@ export const SingleStudentRapor: React.FC<{
               </>
             )}
 
-            {/* Rekap Nilai Rata-rata */}
-            <tr className="bg-slate-100 font-bold">
-              <td colSpan={2} className="border border-black py-2 px-3 text-right uppercase tracking-wide">
-                Rata-rata Nilai Tengah Semester (PTS):
-              </td>
-              <td className="border border-black py-2 px-3 text-center font-black text-[12px] text-[#1E3A6C]">
-                {averageScore}
-              </td>
-            </tr>
+            {/* Baris Rata-rata Nilai PTS telah dihilangkan */}
           </tbody>
         </table>
       </div>
