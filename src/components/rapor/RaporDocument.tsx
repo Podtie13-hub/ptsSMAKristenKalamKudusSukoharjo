@@ -8,6 +8,7 @@ import {
   Student,
   StudentEvaluation,
   Subject,
+  TeachingAssignment,
 } from '../../types';
 
 interface RaporDocumentProps {
@@ -19,6 +20,7 @@ interface RaporDocumentProps {
   evaluations: StudentEvaluation[];
   printSettings: PrintSettings;
   schoolProfile: SchoolProfile;
+  assignments?: TeachingAssignment[];
 }
 
 export const SingleStudentRapor: React.FC<{
@@ -30,6 +32,7 @@ export const SingleStudentRapor: React.FC<{
   evaluation?: StudentEvaluation;
   printSettings: PrintSettings;
   schoolProfile: SchoolProfile;
+  assignments?: TeachingAssignment[];
   pageNumber?: number;
   totalPages?: number;
 }> = ({
@@ -41,6 +44,7 @@ export const SingleStudentRapor: React.FC<{
   evaluation,
   printSettings,
   schoolProfile,
+  assignments = [],
 }) => {
   // Ambil judul kelompok mapel kustom dari printSettings
   const titleKelA =
@@ -53,10 +57,53 @@ export const SingleStudentRapor: React.FC<{
     printSettings.subjectGroupTitles?.['Kelompok C (Peminatan)'] ||
     'Kelompok C (Peminatan / Pilihan)';
 
+  // Saring mata pelajaran: Hanya yang ada guru pengampu di kelas ini ATAU ada nilai yang sudah diinput
+  const classSubjects = React.useMemo(() => {
+    // 1. Mapel yang diset ada guru pengampunya di kelas ini (Setting Mengajar Guru)
+    const assignedSubjectIds = new Set<string>();
+    if (assignments && assignments.length > 0) {
+      assignments.forEach((a) => {
+        if (
+          a.classId === classroom.id &&
+          (!a.academicYearId || a.academicYearId === academicYear.id)
+        ) {
+          assignedSubjectIds.add(a.subjectId);
+        }
+      });
+    }
+
+    // 2. Mapel yang sudah memiliki nilai diinput untuk siswa ini pada semester aktif
+    const gradedSubjectIds = new Set<string>();
+    grades.forEach((g) => {
+      if (
+        g.academicYearId === academicYear.id &&
+        g.semester === academicYear.semester &&
+        g.studentId === student.id &&
+        g.score !== undefined &&
+        g.score > 0
+      ) {
+        gradedSubjectIds.add(g.subjectId);
+      }
+    });
+
+    // Saring mata pelajaran
+    const filtered = subjects.filter(
+      (s) => assignedSubjectIds.has(s.id) || gradedSubjectIds.has(s.id)
+    );
+
+    // Jika ditemukan mapel yang diset mengajar atau bernilai di kelas ini, gunakan hasil filter
+    if (filtered.length > 0) {
+      return filtered;
+    }
+
+    // Fallback cadangan jika belum ada data penugasan di sistem
+    return assignedSubjectIds.size > 0 || gradedSubjectIds.size > 0 ? filtered : subjects;
+  }, [assignments, classroom.id, academicYear.id, academicYear.semester, grades, student.id, subjects]);
+
   // Urutkan mapel berdasarkan kategori dan nomor urut
-  const kelA = subjects.filter((s) => s.category === 'Kelompok A (Umum)').sort((a, b) => a.orderIndex - b.orderIndex);
-  const kelB = subjects.filter((s) => s.category === 'Kelompok B (Umum)').sort((a, b) => a.orderIndex - b.orderIndex);
-  const kelC = subjects.filter((s) => s.category === 'Kelompok C (Peminatan)').sort((a, b) => a.orderIndex - b.orderIndex);
+  const kelA = classSubjects.filter((s) => s.category === 'Kelompok A (Umum)').sort((a, b) => a.orderIndex - b.orderIndex);
+  const kelB = classSubjects.filter((s) => s.category === 'Kelompok B (Umum)').sort((a, b) => a.orderIndex - b.orderIndex);
+  const kelC = classSubjects.filter((s) => s.category === 'Kelompok C (Peminatan)').sort((a, b) => a.orderIndex - b.orderIndex);
 
   // Nilai siswa untuk tahun akademik & semester aktif
   const studentGrades = grades.filter(
@@ -66,7 +113,7 @@ export const SingleStudentRapor: React.FC<{
       g.semester === academicYear.semester
   );
 
-  // Margin kertas dari printSettings (default paddingTop 40mm untuk clearance kertas berkop resmi)
+  // Margin kertas dari printSettings
   const marginStyle: React.CSSProperties = {
     paddingTop: `${printSettings.marginTop !== undefined ? printSettings.marginTop : 40}mm`,
     paddingBottom: `${printSettings.marginBottom || 15}mm`,
@@ -93,7 +140,7 @@ export const SingleStudentRapor: React.FC<{
         </div>
       </div>
 
-      {/* 2. BIODATA SISWA (IDENTITAS RESMI) */}
+      {/* 2. BIODATA SISWA */}
       <div className="grid grid-cols-2 text-[10.5px] gap-x-6 gap-y-1 my-3 px-1 leading-relaxed border-b border-slate-300 pb-2">
         <div className="space-y-1">
           <div className="flex">
@@ -123,7 +170,7 @@ export const SingleStudentRapor: React.FC<{
         </div>
       </div>
 
-      {/* 3. TABEL NILAI PTS: HANYA MENAMPILKAN NO, MATA PELAJARAN, NILAI PTS */}
+      {/* 3. TABEL NILAI PTS */}
       <div className="my-2.5">
         <table className="w-full border-collapse border border-black text-[10.5px]">
           <thead>
@@ -201,15 +248,12 @@ export const SingleStudentRapor: React.FC<{
                 })}
               </>
             )}
-
-            {/* Baris Rata-rata Nilai PTS telah dihilangkan */}
           </tbody>
         </table>
       </div>
 
-      {/* 4. KOLOM TANDA TANGAN (KEPALA SEKOLAH DIBAWAH SETELAH ORANG TUA DAN WALI KELAS) */}
+      {/* 4. TANDA TANGAN */}
       <div className="mt-8 pt-2 text-[10.5px]">
-        {/* Baris 1: Orang Tua / Wali Siswa (Kiri) & Wali Kelas (Kanan) */}
         <div className="flex justify-between items-start px-2">
           {/* Orang Tua / Wali */}
           <div className="text-center w-60">
@@ -234,7 +278,7 @@ export const SingleStudentRapor: React.FC<{
           </div>
         </div>
 
-        {/* Baris 2: Kepala Sekolah Dibuat Dibawah Setelah Tanda Tangan Orang Tua dan Wali Kelas */}
+        {/* Kepala Sekolah */}
         <div className="mt-8 text-center">
           <div className="inline-block text-center w-64">
             <p>Mengetahui,</p>
@@ -262,6 +306,7 @@ export const RaporDocument: React.FC<RaporDocumentProps> = ({
   evaluations,
   printSettings,
   schoolProfile,
+  assignments,
 }) => {
   return (
     <div id="rapor-printable-area" className="w-full">
@@ -284,6 +329,7 @@ export const RaporDocument: React.FC<RaporDocumentProps> = ({
               evaluation={evalRecord}
               printSettings={printSettings}
               schoolProfile={schoolProfile}
+              assignments={assignments}
               pageNumber={index + 1}
               totalPages={students.length}
             />
