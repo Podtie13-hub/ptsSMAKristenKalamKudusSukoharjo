@@ -46,7 +46,7 @@ export const SingleStudentRapor: React.FC<{
   schoolProfile,
   assignments = [],
 }) => {
-  // Ambil judul kelompok mapel kustom dari printSettings
+  // Get custom subject group titles from printSettings
   const titleKelA =
     printSettings.subjectGroupTitles?.['Kelompok A (Umum)'] ||
     'Kelompok A (Muatan Umum / Wajib)';
@@ -59,7 +59,7 @@ export const SingleStudentRapor: React.FC<{
 
   // Saring mata pelajaran: Hanya yang ada guru pengampu di kelas ini ATAU ada nilai yang sudah diinput
   const classSubjects = React.useMemo(() => {
-    // 1. Mapel yang diset ada guru pengampunya di kelas ini (Setting Mengajar Guru)
+    // 1. Mapel yang diset ada guru pengampunya di kelas ini
     const assignedSubjectIds = new Set<string>();
     if (assignments && assignments.length > 0) {
       assignments.forEach((a) => {
@@ -72,7 +72,7 @@ export const SingleStudentRapor: React.FC<{
       });
     }
 
-    // 2. Mapel yang sudah memiliki nilai diinput untuk siswa ini pada semester aktif
+    // 2. Mapel yang sudah memiliki nilai diinput untuk siswa ini atau untuk kelas ini
     const gradedSubjectIds = new Set<string>();
     grades.forEach((g) => {
       if (
@@ -96,16 +96,16 @@ export const SingleStudentRapor: React.FC<{
       return filtered;
     }
 
-    // Fallback cadangan jika belum ada data penugasan di sistem
+    // Fallback cadangan jika belum ada data penugasan sama sekali di sistem
     return assignedSubjectIds.size > 0 || gradedSubjectIds.size > 0 ? filtered : subjects;
   }, [assignments, classroom.id, academicYear.id, academicYear.semester, grades, student.id, subjects]);
 
-  // Urutkan mapel berdasarkan kategori dan nomor urut
+  // Sort subjects by category and orderIndex
   const kelA = classSubjects.filter((s) => s.category === 'Kelompok A (Umum)').sort((a, b) => a.orderIndex - b.orderIndex);
   const kelB = classSubjects.filter((s) => s.category === 'Kelompok B (Umum)').sort((a, b) => a.orderIndex - b.orderIndex);
   const kelC = classSubjects.filter((s) => s.category === 'Kelompok C (Peminatan)').sort((a, b) => a.orderIndex - b.orderIndex);
 
-  // Nilai siswa untuk tahun akademik & semester aktif
+  // Student grades for this academic year & semester
   const studentGrades = grades.filter(
     (g) =>
       g.studentId === student.id &&
@@ -113,7 +113,7 @@ export const SingleStudentRapor: React.FC<{
       g.semester === academicYear.semester
   );
 
-  // Margin kertas dari printSettings
+  // Paper margin inline style from printSettings
   const marginStyle: React.CSSProperties = {
     paddingTop: `${printSettings.marginTop !== undefined ? printSettings.marginTop : 40}mm`,
     paddingBottom: `${printSettings.marginBottom || 15}mm`,
@@ -151,73 +151,99 @@ export const SingleStudentRapor: React.FC<{
           <div className="flex">
             <span className="w-32 text-slate-700 font-medium">Nomor Induk / NISN</span>
             <span className="w-3">:</span>
-            <span className="font-semibold">{student.nis} / {student.nisn || '-'}</span>
+            <span className="font-mono text-slate-900">{student.nis} {student.nisn ? `/ ${student.nisn}` : ''}</span>
+          </div>
+          <div className="flex">
+            <span className="w-32 text-slate-700 font-medium">Kelas / Rombel</span>
+            <span className="w-3">:</span>
+            <span className="font-bold text-slate-900">{classroom.name}</span>
           </div>
         </div>
+
         <div className="space-y-1">
           <div className="flex">
-            <span className="w-28 text-slate-700 font-medium">Kelas</span>
+            <span className="w-32 text-slate-700 font-medium">Nama Sekolah</span>
             <span className="w-3">:</span>
-            <span className="font-bold">{classroom.name}</span>
+            <span className="font-bold text-slate-900 uppercase">{schoolProfile.name}</span>
           </div>
           <div className="flex">
-            <span className="w-28 text-slate-700 font-medium">Fase</span>
+            <span className="w-32 text-slate-700 font-medium">Fase Kurikulum</span>
             <span className="w-3">:</span>
-            <span className="font-bold">
-              {classroom.gradeLevel === 'X' ? 'E' : 'F'}
-            </span>
+            <span className="font-bold text-slate-900">{classroom.fase || 'Fase E (Kelas X)'}</span>
+          </div>
+          <div className="flex">
+            <span className="w-32 text-slate-700 font-medium">Semester</span>
+            <span className="w-3">:</span>
+            <span className="font-bold text-slate-900">{academicYear.semester}</span>
           </div>
         </div>
       </div>
 
-      {/* 3. TABEL NILAI PTS */}
-      <div className="my-2.5">
-        <table className="w-full border-collapse border border-black text-[10.5px]">
+      {/* 3. TABEL NILAI MATA PELAJARAN */}
+      <div className="my-2">
+        <table className="w-full border-collapse border border-black text-[10px]">
           <thead>
-            <tr className="bg-slate-100 text-center font-bold">
-              <th className="border border-black py-2 px-2 w-12 text-center">No</th>
-              <th className="border border-black py-2 px-3 text-left">Mata Pelajaran</th>
-              <th className="border border-black py-2 px-3 w-32 text-center">Nilai PTS</th>
+            <tr className="bg-slate-100 text-slate-900 font-bold text-center border-b border-black">
+              <th className="border border-black px-1.5 py-1.5 w-7">No</th>
+              <th className="border border-black px-2 py-1.5 text-left">Mata Pelajaran</th>
+              <th className="border border-black px-1 py-1.5 w-12">KKTP / KKM</th>
+              <th className="border border-black px-1 py-1.5 w-12">Nilai PTS</th>
+              <th className="border border-black px-1 py-1.5 w-10">Predikat</th>
+              <th className="border border-black px-2 py-1.5 text-left">Deskripsi Capaian Kompetensi</th>
             </tr>
           </thead>
           <tbody>
             {/* Kelompok A */}
-            <tr className="bg-slate-50 font-bold">
-              <td colSpan={3} className="border border-black py-1 px-3 text-[10px] uppercase text-[#1E3A6C] tracking-wide">
-                {titleKelA}
-              </td>
-            </tr>
-            {kelA.map((sub, idx) => {
-              const grade = studentGrades.find((g) => g.subjectId === sub.id);
-              const score = grade?.score;
-              return (
-                <tr key={sub.id} className="hover:bg-slate-50/50">
-                  <td className="border border-black py-1.5 px-2 text-center font-medium">{idx + 1}</td>
-                  <td className="border border-black py-1.5 px-3 font-medium text-slate-900">{sub.name}</td>
-                  <td className="border border-black py-1.5 px-3 text-center font-bold text-slate-950">
-                    {score !== undefined ? score : '-'}
+            {kelA.length > 0 && (
+              <>
+                <tr className="bg-slate-50 font-bold border-b border-black text-slate-900">
+                  <td colSpan={6} className="border border-black px-2 py-1">
+                    {titleKelA}
                   </td>
                 </tr>
-              );
-            })}
+                {kelA.map((sub, idx) => {
+                  const g = studentGrades.find((gr) => gr.subjectId === sub.id);
+                  const isUnderKKTP = g?.score !== undefined && g.score < sub.kkm;
+                  return (
+                    <tr key={sub.id} className="border-b border-black">
+                      <td className="border border-black text-center py-1 font-medium">{idx + 1}</td>
+                      <td className="border border-black px-2 py-1 font-semibold">{sub.name}</td>
+                      <td className="border border-black text-center py-1 font-medium">{sub.kkm}</td>
+                      <td className={`border border-black text-center py-1 font-bold ${isUnderKKTP ? 'text-red-700 bg-red-50/50' : ''}`}>
+                        {g?.score !== undefined ? g.score : '-'}
+                      </td>
+                      <td className="border border-black text-center py-1 font-bold">{g?.predicate || '-'}</td>
+                      <td className="border border-black px-2 py-1 leading-snug text-[9.5px]">
+                        {g?.competencyNote || '-'}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </>
+            )}
 
             {/* Kelompok B */}
             {kelB.length > 0 && (
               <>
-                <tr className="bg-slate-50 font-bold">
-                  <td colSpan={3} className="border border-black py-1 px-3 text-[10px] uppercase text-[#1E3A6C] tracking-wide">
+                <tr className="bg-slate-50 font-bold border-b border-black text-slate-900">
+                  <td colSpan={6} className="border border-black px-2 py-1">
                     {titleKelB}
                   </td>
                 </tr>
                 {kelB.map((sub, idx) => {
-                  const grade = studentGrades.find((g) => g.subjectId === sub.id);
-                  const score = grade?.score;
+                  const g = studentGrades.find((gr) => gr.subjectId === sub.id);
+                  const isUnderKKTP = g?.score !== undefined && g.score < sub.kkm;
                   return (
-                    <tr key={sub.id} className="hover:bg-slate-50/50">
-                      <td className="border border-black py-1.5 px-2 text-center font-medium">{idx + 1}</td>
-                      <td className="border border-black py-1.5 px-3 font-medium text-slate-900">{sub.name}</td>
-                      <td className="border border-black py-1.5 px-3 text-center font-bold text-slate-950">
-                        {score !== undefined ? score : '-'}
+                    <tr key={sub.id} className="border-b border-black">
+                      <td className="border border-black text-center py-1 font-medium">{idx + 1}</td>
+                      <td className="border border-black px-2 py-1 font-semibold">{sub.name}</td>
+                      <td className="border border-black text-center py-1 font-medium">{sub.kkm}</td>
+                      <td className={`border border-black text-center py-1 font-bold ${isUnderKKTP ? 'text-red-700 bg-red-50/50' : ''}`}>
+                        {g?.score !== undefined ? g.score : '-'}
+                      </td>
+                      <td className="border border-black text-center py-1 font-bold">{g?.predicate || '-'}</td>
+                      <td className="border border-black px-2 py-1 leading-snug text-[9.5px]">
+                        {g?.competencyNote || '-'}
                       </td>
                     </tr>
                   );
@@ -228,20 +254,25 @@ export const SingleStudentRapor: React.FC<{
             {/* Kelompok C */}
             {kelC.length > 0 && (
               <>
-                <tr className="bg-slate-50 font-bold">
-                  <td colSpan={3} className="border border-black py-1 px-3 text-[10px] uppercase text-[#1E3A6C] tracking-wide">
+                <tr className="bg-slate-50 font-bold border-b border-black text-slate-900">
+                  <td colSpan={6} className="border border-black px-2 py-1">
                     {titleKelC}
                   </td>
                 </tr>
                 {kelC.map((sub, idx) => {
-                  const grade = studentGrades.find((g) => g.subjectId === sub.id);
-                  const score = grade?.score;
+                  const g = studentGrades.find((gr) => gr.subjectId === sub.id);
+                  const isUnderKKTP = g?.score !== undefined && g.score < sub.kkm;
                   return (
-                    <tr key={sub.id} className="hover:bg-slate-50/50">
-                      <td className="border border-black py-1.5 px-2 text-center font-medium">{idx + 1}</td>
-                      <td className="border border-black py-1.5 px-3 font-medium text-slate-900">{sub.name}</td>
-                      <td className="border border-black py-1.5 px-3 text-center font-bold text-slate-950">
-                        {score !== undefined ? score : '-'}
+                    <tr key={sub.id} className="border-b border-black">
+                      <td className="border border-black text-center py-1 font-medium">{idx + 1}</td>
+                      <td className="border border-black px-2 py-1 font-semibold">{sub.name}</td>
+                      <td className="border border-black text-center py-1 font-medium">{sub.kkm}</td>
+                      <td className={`border border-black text-center py-1 font-bold ${isUnderKKTP ? 'text-red-700 bg-red-50/50' : ''}`}>
+                        {g?.score !== undefined ? g.score : '-'}
+                      </td>
+                      <td className="border border-black text-center py-1 font-bold">{g?.predicate || '-'}</td>
+                      <td className="border border-black px-2 py-1 leading-snug text-[9.5px]">
+                        {g?.competencyNote || '-'}
                       </td>
                     </tr>
                   );
@@ -252,44 +283,90 @@ export const SingleStudentRapor: React.FC<{
         </table>
       </div>
 
-      {/* 4. TANDA TANGAN */}
-      <div className="mt-8 pt-2 text-[10.5px]">
-        <div className="flex justify-between items-start px-2">
-          {/* Orang Tua / Wali */}
-          <div className="text-center w-60">
-            <p>Mengetahui,</p>
-            <p className="font-medium">Orang Tua / Wali Siswa</p>
-            <div className="h-20"></div>
-            <div className="border-b border-black w-44 mx-auto"></div>
-            <p className="text-[9.5px] text-slate-500 mt-1">( ................................................... )</p>
-          </div>
-
-          {/* Wali Kelas */}
-          <div className="text-center w-60">
-            <p>{printSettings.printDate || 'Sukoharjo, 27 September 2024'}</p>
-            <p className="font-medium">Wali Kelas {classroom.name}</p>
-            <div className="h-20"></div>
-            <p className="font-bold underline text-slate-900">
-              {printSettings.homeroomTeacherName || 'Drs. Budi Santoso, M.Pd.'}
-            </p>
-            <p className="text-[9.5px] text-slate-700 mt-0.5">
-              NIP. {printSettings.homeroomTeacherNIP || '-'}
-            </p>
-          </div>
+      {/* 4. TABEL KEHADIRAN (KETIDAKHADIRAN) & CATATAN WALI KELAS */}
+      <div className="grid grid-cols-12 gap-3 my-3 text-[10px]">
+        {/* Kolom Kiri: Tabel Ketidakhadiran */}
+        <div className="col-span-5">
+          <table className="w-full border-collapse border border-black text-[10px]">
+            <thead>
+              <tr className="bg-slate-100 border-b border-black text-center font-bold">
+                <th colSpan={2} className="border border-black px-2 py-1 text-left">
+                  Ketidakhadiran
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="border-b border-black">
+                <td className="border border-black px-2 py-1 font-medium">Sakit</td>
+                <td className="border border-black text-center py-1 w-16 font-bold">
+                  {evaluation?.sickDays !== undefined ? evaluation.sickDays : 0} hari
+                </td>
+              </tr>
+              <tr className="border-b border-black">
+                <td className="border border-black px-2 py-1 font-medium">Izin</td>
+                <td className="border border-black text-center py-1 w-16 font-bold">
+                  {evaluation?.permittedDays !== undefined ? evaluation.permittedDays : 0} hari
+                </td>
+              </tr>
+              <tr className="border-b border-black">
+                <td className="border border-black px-2 py-1 font-medium">Tanpa Keterangan</td>
+                <td className="border border-black text-center py-1 w-16 font-bold">
+                  {evaluation?.unexcusedDays !== undefined ? evaluation.unexcusedDays : 0} hari
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
-        {/* Kepala Sekolah */}
-        <div className="mt-8 text-center">
-          <div className="inline-block text-center w-64">
-            <p>Mengetahui,</p>
-            <p className="font-medium">Kepala Sekolah</p>
-            <div className="h-20"></div>
-            <p className="font-bold underline text-slate-900">
-              {printSettings.principalName || 'Drs. Andreas Setiawan, M.Pd.'}
-            </p>
-            <p className="text-[9.5px] text-slate-700 mt-0.5">
-              NIP. {printSettings.principalNIP || '19710314 199802 1 001'}
-            </p>
+        {/* Kolom Kanan: Catatan Wali Kelas */}
+        <div className="col-span-7">
+          <div className="border border-black p-2 h-full flex flex-col justify-between">
+            <div>
+              <div className="font-bold uppercase tracking-wider text-[9.5px] border-b border-slate-300 pb-0.5 mb-1 text-slate-800">
+                Catatan Wali Kelas
+              </div>
+              <p className="italic text-[10px] leading-relaxed text-slate-900">
+                "{evaluation?.homeroomNotes || 'Tingkatkan ketekunan belajar dan pertahankan prestasi di tengah semester.'}"
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 5. TANDA TANGAN (LEGALITAS RAPOR) */}
+      <div className="mt-5 text-[10.5px] break-inside-avoid">
+        {/* Baris Tanggal */}
+        <div className="flex justify-end mb-1 pr-6">
+          <span>{printSettings.printDate || 'Sukoharjo, 27 September 2024'}</span>
+        </div>
+
+        {/* 3 Kolom Tanda Tangan: Orang Tua/Wali, Wali Kelas, Kepala Sekolah */}
+        <div className="grid grid-cols-3 text-center gap-4 pt-1">
+          {/* Kolom 1: Orang Tua / Wali Siswa */}
+          <div className="flex flex-col justify-between h-24">
+            <div>Mengetahui,<br />Orang Tua / Wali Siswa</div>
+            <div>
+              <div className="border-b border-black w-36 mx-auto"></div>
+              <div className="text-[9.5px] text-slate-500 mt-0.5">(........................................)</div>
+            </div>
+          </div>
+
+          {/* Kolom 2: Wali Kelas */}
+          <div className="flex flex-col justify-between h-24">
+            <div>Wali Kelas,</div>
+            <div>
+              <div className="font-bold underline uppercase">{printSettings.homeroomTeacherName || 'Drs. Budi Santoso, M.Pd.'}</div>
+              <div className="text-[9.5px]">NIP. {printSettings.homeroomTeacherNIP || '-'}</div>
+            </div>
+          </div>
+
+          {/* Kolom 3: Kepala Sekolah */}
+          <div className="flex flex-col justify-between h-24">
+            <div>Mengetahui,<br />Kepala Sekolah</div>
+            <div>
+              <div className="font-bold underline uppercase">{printSettings.principalName || schoolProfile.principalName || 'Drs. Andreas Setiawan, M.Pd.'}</div>
+              <div className="text-[9.5px]">NIP. {printSettings.principalNIP || schoolProfile.principalNIP || '-'}</div>
+            </div>
           </div>
         </div>
       </div>
@@ -306,7 +383,7 @@ export const RaporDocument: React.FC<RaporDocumentProps> = ({
   evaluations,
   printSettings,
   schoolProfile,
-  assignments,
+  assignments = [],
 }) => {
   return (
     <div id="rapor-printable-area" className="w-full">
