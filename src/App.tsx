@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useState, useEffect } from 'react';
 import {
   AcademicYear,
@@ -18,316 +13,318 @@ import {
   Teacher,
   TeachingAssignment,
 } from './types';
-import { StorageService } from './utils/storage';
-import Header from './components/Header';
-import AdminDashboard from './components/admin/AdminDashboard';
-import { PortalGuru } from './components/guru/PortalGuru';
+import { storage } from './utils/storage';
 import { LoginPage } from './components/auth/LoginPage';
+import { AdminDashboard } from './components/admin/AdminDashboard';
+import { PortalGuru } from './components/guru/PortalGuru';
+import { WaliKelasView } from './components/walikelas/WaliKelasView';
 import PrintPreviewModal from './components/rapor/PrintPreviewModal';
+import LegerNilaiModal from './components/walikelas/LegerNilaiModal';
 import SqlExportModal from './components/sql/SqlExportModal';
 import RaporDocument from './components/rapor/RaporDocument';
+import PhpPackageModal from './components/admin/PhpPackageModal';
 
-export default function App() {
-  // Main state initialized from storage / defaults
+export const App: React.FC = () => {
+  // 1. Core State Initialization with LocalStorage Persistence
   const [academicYears, setAcademicYears] = useState<AcademicYear[]>(() =>
-    StorageService.getAcademicYears()
+    storage.getAcademicYears()
   );
-  const [classes, setClasses] = useState<ClassRoom[]>(() =>
-    StorageService.getClasses()
-  );
-  const [subjects, setSubjects] = useState<Subject[]>(() =>
-    StorageService.getSubjects()
-  );
-  const [teachers, setTeachers] = useState<Teacher[]>(() =>
-    StorageService.getTeachers()
-  );
-  const [assignments, setAssignments] = useState<TeachingAssignment[]>(() =>
-    StorageService.getAssignments()
-  );
-  const [students, setStudents] = useState<Student[]>(() =>
-    StorageService.getStudents()
-  );
-  const [grades, setGrades] = useState<PTSGrade[]>(() =>
-    StorageService.getGrades()
-  );
+  const [classes, setClasses] = useState<ClassRoom[]>(() => storage.getClasses());
+  const [teachers, setTeachers] = useState<Teacher[]>(() => storage.getTeachers());
+  const [subjects, setSubjects] = useState<Subject[]>(() => storage.getSubjects());
+  const [students, setStudents] = useState<Student[]>(() => storage.getStudents());
+  const [grades, setGrades] = useState<PTSGrade[]>(() => storage.getGrades());
   const [evaluations, setEvaluations] = useState<StudentEvaluation[]>(() =>
-    StorageService.getEvaluations()
-  );
-  const [printSettings, setPrintSettings] = useState<PrintSettings>(() =>
-    StorageService.getPrintSettings()
+    storage.getEvaluations()
   );
   const [schoolProfile, setSchoolProfile] = useState<SchoolProfile>(() =>
-    StorageService.getSchoolProfile()
+    storage.getSchoolProfile()
+  );
+  const [printSettings, setPrintSettings] = useState<PrintSettings>(() =>
+    storage.getPrintSettings()
   );
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>(() =>
-    StorageService.getAdminUsers()
+    storage.getAdminUsers()
+  );
+  const [assignments, setAssignments] = useState<TeachingAssignment[]>(() =>
+    storage.getAssignments()
   );
 
-  // Auth Session state (null = not logged in, otherwise holds user credentials and role)
-  const [authSession, setAuthSession] = useState<AuthSession | null>(() =>
-    StorageService.getAuthSession()
+  // 2. Authentication State
+  const [currentSession, setCurrentSession] = useState<AuthSession | null>(() =>
+    storage.getSession()
   );
 
-  // Modals state
-  const [isSqlModalOpen, setIsSqlModalOpen] = useState(false);
+  // 3. Modals & Print Config State
   const [previewModalConfig, setPreviewModalConfig] = useState<{
     isOpen: boolean;
-    mode: 'single' | 'class';
+    classId: string;
     studentIndex: number;
-    classId?: string;
+    mode: 'single' | 'class';
   }>({
     isOpen: false,
-    mode: 'class',
+    classId: '',
     studentIndex: 0,
+    mode: 'single',
   });
 
-  // Active academic year & semester
-  const activeAcademicYear =
-    academicYears.find((ay) => ay.isActive) || academicYears[0];
+  const [legerModalClassId, setLegerModalClassId] = useState<string | null>(null);
+  const [isSqlModalOpen, setIsSqlModalOpen] = useState<boolean>(false);
+  const [isPhpModalOpen, setIsPhpModalOpen] = useState<boolean>(false);
 
-  // Save changes to localStorage
+  // 4. Persistence Effects
   useEffect(() => {
-    StorageService.saveAcademicYears(academicYears);
+    storage.saveAcademicYears(academicYears);
   }, [academicYears]);
 
   useEffect(() => {
-    StorageService.saveClasses(classes);
+    storage.saveClasses(classes);
   }, [classes]);
 
   useEffect(() => {
-    StorageService.saveSubjects(subjects);
-  }, [subjects]);
-
-  useEffect(() => {
-    StorageService.saveTeachers(teachers);
+    storage.saveTeachers(teachers);
   }, [teachers]);
 
   useEffect(() => {
-    StorageService.saveAssignments(assignments);
-  }, [assignments]);
+    storage.saveSubjects(subjects);
+  }, [subjects]);
 
   useEffect(() => {
-    StorageService.saveStudents(students);
+    storage.saveStudents(students);
   }, [students]);
 
   useEffect(() => {
-    StorageService.saveGrades(grades);
+    storage.saveGrades(grades);
   }, [grades]);
 
   useEffect(() => {
-    StorageService.saveEvaluations(evaluations);
+    storage.saveEvaluations(evaluations);
   }, [evaluations]);
 
   useEffect(() => {
-    StorageService.savePrintSettings(printSettings);
-  }, [printSettings]);
-
-  useEffect(() => {
-    StorageService.saveSchoolProfile(schoolProfile);
+    storage.saveSchoolProfile(schoolProfile);
   }, [schoolProfile]);
 
   useEffect(() => {
-    StorageService.saveAdminUsers(adminUsers);
+    storage.savePrintSettings(printSettings);
+  }, [printSettings]);
+
+  useEffect(() => {
+    storage.saveAdminUsers(adminUsers);
   }, [adminUsers]);
 
-  // Auth handlers
-  const handleLogin = (session: AuthSession) => {
-    StorageService.saveAuthSession(session);
-    setAuthSession(session);
-  };
+  useEffect(() => {
+    storage.saveAssignments(assignments);
+  }, [assignments]);
 
-  const handleLogout = () => {
-    StorageService.saveAuthSession(null);
-    setAuthSession(null);
-  };
+  useEffect(() => {
+    storage.saveSession(currentSession);
+  }, [currentSession]);
 
-  // Direct login / impersonation for testing from Admin Dashboard
-  const handleImpersonateTeacher = (teacher: Teacher) => {
-    const session: AuthSession = {
-      role: 'guru',
-      username: teacher.username || teacher.name.toLowerCase().split(' ')[0],
-      name: teacher.name,
-      teacherId: teacher.id,
-      loggedInAt: new Date().toISOString(),
-    };
-    StorageService.saveAuthSession(session);
-    setAuthSession(session);
-  };
+  // Handle active academic year
+  const activeAcademicYear =
+    academicYears.find((y) => y.isActive) || academicYears[0];
 
-  // Reset demo data handler
-  const handleResetData = () => {
-    StorageService.resetAllData();
-    setAcademicYears(StorageService.getAcademicYears());
-    setClasses(StorageService.getClasses());
-    setSubjects(StorageService.getSubjects());
-    setTeachers(StorageService.getTeachers());
-    setAssignments(StorageService.getAssignments());
-    setStudents(StorageService.getStudents());
-    setGrades(StorageService.getGrades());
-    setEvaluations(StorageService.getEvaluations());
-    setPrintSettings(StorageService.getPrintSettings());
-    setSchoolProfile(StorageService.getSchoolProfile());
-    setAdminUsers(StorageService.getAdminUsers());
-  };
-
-  // Open Preview Modal
-  const handleOpenPreviewModal = (
-    mode: 'single' | 'class',
-    studentIndex = 0,
-    classId?: string
-  ) => {
-    setPreviewModalConfig({
-      isOpen: true,
-      mode,
-      studentIndex,
-      classId,
+  // Grade save handler with batch support
+  const handleSaveGrades = (newGrades: PTSGrade[]) => {
+    setGrades((prev) => {
+      const updated = [...prev];
+      newGrades.forEach((ng) => {
+        const index = updated.findIndex(
+          (g) =>
+            g.studentId === ng.studentId &&
+            g.subjectId === ng.subjectId &&
+            g.academicYearId === ng.academicYearId &&
+            g.semester === ng.semester
+        );
+        if (index >= 0) {
+          updated[index] = ng;
+        } else {
+          updated.push(ng);
+        }
+      });
+      return updated;
     });
   };
 
-  // Current logged in teacher entity
-  const currentLoggedInTeacher =
-    authSession?.role === 'guru' && authSession.teacherId
-      ? teachers.find((t) => t.id === authSession.teacherId) || teachers[0]
-      : teachers[0];
+  // Evaluation save handler
+  const handleSaveEvaluations = (newEvals: StudentEvaluation[]) => {
+    setEvaluations((prev) => {
+      const updated = [...prev];
+      newEvals.forEach((ne) => {
+        const index = updated.findIndex(
+          (e) =>
+            e.studentId === ne.studentId &&
+            e.academicYearId === ne.academicYearId &&
+            e.semester === ne.semester
+        );
+        if (index >= 0) {
+          updated[index] = ne;
+        } else {
+          updated.push(ne);
+        }
+      });
+      return updated;
+    });
+  };
 
-  // Determine targeted classroom for printing
+  // Print Handlers
+  const handlePrintStudent = (classId: string, studentId: string) => {
+    const classStudents = students.filter((s) => s.classId === classId);
+    const sIndex = classStudents.findIndex((s) => s.id === studentId);
+    setPreviewModalConfig({
+      isOpen: true,
+      classId,
+      studentIndex: sIndex >= 0 ? sIndex : 0,
+      mode: 'single',
+    });
+  };
+
+  const handlePrintClass = (classId: string) => {
+    setPreviewModalConfig({
+      isOpen: true,
+      classId,
+      studentIndex: 0,
+      mode: 'class',
+    });
+  };
+
+  const handleOpenLeger = (classId: string) => {
+    setLegerModalClassId(classId);
+  };
+
+  const handleLogout = () => {
+    setCurrentSession(null);
+  };
+
+  // Resolve target class and students for printing
   const targetClass =
-    (previewModalConfig.classId
-      ? classes.find((c) => c.id === previewModalConfig.classId)
-      : null) ||
-    (authSession?.role === 'guru' && currentLoggedInTeacher
-      ? classes.find((c) => c.homeroomTeacherId === currentLoggedInTeacher.id)
-      : null) ||
-    classes[0];
-
+    classes.find((c) => c.id === previewModalConfig.classId) || classes[0];
   const classStudents = students.filter((s) => s.classId === targetClass?.id);
-
-  // Student list to print (single student or whole class)
   const studentsToPrint =
     previewModalConfig.mode === 'single'
-      ? [classStudents[previewModalConfig.studentIndex] || classStudents[0]].filter(Boolean)
+      ? [classStudents[previewModalConfig.studentIndex] || classStudents[0]].filter(
+          Boolean
+        )
       : classStudents;
 
-  // IF USER IS NOT LOGGED IN: Render Login Page
-  if (!authSession) {
-    return (
-      <div className="min-h-screen bg-slate-100 flex flex-col">
-        <LoginPage
-          teachers={teachers}
-          classes={classes}
-          schoolProfile={schoolProfile}
-          adminUsers={adminUsers}
-          onLogin={handleLogin}
-        />
-
-        {/* SQL Export Modal accessible from anywhere if needed */}
-        {isSqlModalOpen && (
-          <SqlExportModal
-            isOpen={isSqlModalOpen}
-            onClose={() => setIsSqlModalOpen(false)}
-            academicYears={academicYears}
-            classes={classes}
-            subjects={subjects}
-            teachers={teachers}
-            assignments={assignments}
-            students={students}
-            grades={grades}
-          />
-        )}
-      </div>
-    );
-  }
-
-  // IF USER IS LOGGED IN: Render Workspace
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col selection:bg-[#1E3A6C] selection:text-white">
-      {/* 1. Official Header with Brand Identity, User Badge, and Logout */}
-      <Header
-        authSession={authSession}
-        onLogout={handleLogout}
-        activeAcademicYear={activeAcademicYear}
-        onOpenSqlModal={() => setIsSqlModalOpen(true)}
-        schoolProfile={schoolProfile}
-        teachers={teachers}
-        classes={classes}
-      />
-
-      {/* 2. Main Workspace Body (Visible on screen, hidden on print) */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 no-print">
-        {authSession.role === 'admin' && (
-          <AdminDashboard
-            academicYears={academicYears}
-            classes={classes}
-            subjects={subjects}
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col antialiased">
+      {/* 1. Main View Routing Based on Auth State */}
+      <main className="flex-1">
+        {!currentSession ? (
+          <LoginPage
             teachers={teachers}
-            assignments={assignments}
-            students={students}
+            classes={classes}
             schoolProfile={schoolProfile}
             adminUsers={adminUsers}
-            currentAdminUsername={authSession.username}
-            printSettings={printSettings}
-            onUpdateAcademicYears={setAcademicYears}
-            onUpdateClasses={setClasses}
-            onUpdateSubjects={setSubjects}
-            onUpdateTeachers={setTeachers}
-            onUpdateAssignments={setAssignments}
-            onUpdateStudents={setStudents}
-            onUpdateSchoolProfile={setSchoolProfile}
-            onUpdateAdminUsers={setAdminUsers}
-            onUpdatePrintSettings={setPrintSettings}
-            onResetData={handleResetData}
-            onOpenSqlModal={() => setIsSqlModalOpen(true)}
-            onImpersonateTeacher={handleImpersonateTeacher}
+            onLogin={setCurrentSession}
+            onOpenPhpPackage={() => setIsPhpModalOpen(true)}
           />
-        )}
-
-        {authSession.role === 'guru' && (
-          <PortalGuru
-            currentTeacher={currentLoggedInTeacher}
-            teachers={teachers}
+        ) : currentSession.role === 'admin' ? (
+          <AdminDashboard
+            schoolProfile={schoolProfile}
             academicYears={academicYears}
-            activeAcademicYear={activeAcademicYear}
             classes={classes}
+            teachers={teachers}
             subjects={subjects}
-            assignments={assignments}
             students={students}
             grades={grades}
             evaluations={evaluations}
+            adminUsers={adminUsers}
             printSettings={printSettings}
-            schoolProfile={schoolProfile}
-            onSaveGrades={setGrades}
-            onUpdateEvaluations={setEvaluations}
+            assignments={assignments}
+            currentUser={currentSession}
+            onLogout={handleLogout}
+            onUpdateProfile={setSchoolProfile}
+            onUpdateAcademicYears={setAcademicYears}
+            onUpdateClasses={setClasses}
+            onUpdateTeachers={setTeachers}
+            onUpdateSubjects={setSubjects}
+            onUpdateStudents={setStudents}
+            onUpdateAdminUsers={setAdminUsers}
             onUpdatePrintSettings={setPrintSettings}
-            onOpenPreviewModal={handleOpenPreviewModal}
+            onUpdateAssignments={setAssignments}
+            onOpenSqlModal={() => setIsSqlModalOpen(true)}
+            onOpenPhpPackage={() => setIsPhpModalOpen(true)}
+            onOpenLeger={handleOpenLeger}
+            onPrintClass={handlePrintClass}
+            onPrintStudent={handlePrintStudent}
+          />
+        ) : currentSession.role === 'walikelas' ? (
+          <WaliKelasView
+            teacherId={currentSession.teacherId || ''}
+            classes={classes}
+            students={students}
+            subjects={subjects}
+            grades={grades}
+            evaluations={evaluations}
+            academicYear={activeAcademicYear}
+            schoolProfile={schoolProfile}
+            currentUser={currentSession}
+            onLogout={handleLogout}
+            onSaveEvaluations={handleSaveEvaluations}
+            onPrintStudent={handlePrintStudent}
+            onPrintClass={handlePrintClass}
+            onOpenLeger={handleOpenLeger}
+          />
+        ) : (
+          <PortalGuru
+            teacherId={currentSession.teacherId || ''}
+            teachers={teachers}
+            classes={classes}
+            subjects={subjects}
+            students={students}
+            grades={grades}
+            assignments={assignments}
+            academicYear={activeAcademicYear}
+            currentUser={currentSession}
+            onLogout={handleLogout}
+            onSaveGrades={handleSaveGrades}
           />
         )}
       </main>
 
-      {/* 3. Footer */}
-      <footer className="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500 no-print mt-auto">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <div>
-            © {new Date().getFullYear()} <strong>{schoolProfile.name}</strong> • Sistem Penilaian Tengah Semester (PTS)
-          </div>
-          <div className="flex items-center gap-3 text-slate-400">
-            <span>Solo Baru, Sukoharjo</span>
-            <span>•</span>
-            <button
-              type="button"
-              onClick={() => setIsSqlModalOpen(true)}
-              className="text-[#1E3A6C] hover:underline font-semibold"
-            >
-              MySQL Database Schema & PHP Code
-            </button>
-          </div>
-        </div>
-      </footer>
+      {/* 2. Leger Nilai Modal */}
+      {legerModalClassId && (
+        <LegerNilaiModal
+          isOpen={!!legerModalClassId}
+          onClose={() => setLegerModalClassId(null)}
+          classroom={classes.find((c) => c.id === legerModalClassId) || classes[0]}
+          students={students.filter((s) => s.classId === legerModalClassId)}
+          subjects={subjects}
+          grades={grades}
+          evaluations={evaluations}
+          academicYear={activeAcademicYear}
+          schoolProfile={schoolProfile}
+        />
+      )}
+
+      {/* 3. MySQL SQL Export Modal */}
+      {isSqlModalOpen && (
+        <SqlExportModal
+          isOpen={isSqlModalOpen}
+          onClose={() => setIsSqlModalOpen(false)}
+          academicYears={academicYears}
+          classes={classes}
+          teachers={teachers}
+          subjects={subjects}
+          students={students}
+          grades={grades}
+          evaluations={evaluations}
+          schoolProfile={schoolProfile}
+          adminUsers={adminUsers}
+          assignments={assignments}
+        />
+      )}
 
       {/* 4. Interactive Print Preview Modal */}
       {previewModalConfig.isOpen && (
         <PrintPreviewModal
           isOpen={previewModalConfig.isOpen}
-          onClose={() => setPreviewModalConfig((prev) => ({ ...prev, isOpen: false }))}
+          onClose={() =>
+            setPreviewModalConfig((prev) => ({ ...prev, isOpen: false }))
+          }
           students={studentsToPrint}
           classroom={targetClass}
           academicYear={activeAcademicYear}
@@ -339,25 +336,29 @@ export default function App() {
           schoolProfile={schoolProfile}
           initialStudentIndex={previewModalConfig.studentIndex}
           printMode={previewModalConfig.mode}
+          assignments={assignments}
         />
       )}
 
-      {/* 5. SQL & PHP Database Export Modal */}
-      {isSqlModalOpen && (
-        <SqlExportModal
-          isOpen={isSqlModalOpen}
-          onClose={() => setIsSqlModalOpen(false)}
+      {/* 5. PHP Native + MySQL Package Modal */}
+      {isPhpModalOpen && (
+        <PhpPackageModal
+          isOpen={isPhpModalOpen}
+          onClose={() => setIsPhpModalOpen(false)}
           academicYears={academicYears}
           classes={classes}
-          subjects={subjects}
           teachers={teachers}
-          assignments={assignments}
+          subjects={subjects}
           students={students}
           grades={grades}
+          evaluations={evaluations}
+          schoolProfile={schoolProfile}
+          adminUsers={adminUsers}
+          assignments={assignments}
         />
       )}
 
-      {/* 6. Print-Only Dedicated Area (Rendered when user triggers window.print()) */}
+      {/* 6. Print-Only Dedicated Area */}
       <div className="print-only">
         <RaporDocument
           students={studentsToPrint}
@@ -368,8 +369,11 @@ export default function App() {
           evaluations={evaluations}
           printSettings={printSettings}
           schoolProfile={schoolProfile}
+          assignments={assignments}
         />
       </div>
     </div>
   );
-}
+};
+
+export default App;
