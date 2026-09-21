@@ -41,7 +41,6 @@ export const SingleStudentRapor: React.FC<{
   academicYear,
   subjects,
   grades,
-  evaluation,
   printSettings,
   schoolProfile,
   assignments = [],
@@ -57,9 +56,8 @@ export const SingleStudentRapor: React.FC<{
     printSettings.subjectGroupTitles?.['Kelompok C (Peminatan)'] ||
     'Kelompok C (Peminatan / Pilihan)';
 
-  // Saring mata pelajaran: Hanya yang ada guru pengampu di kelas ini ATAU ada nilai yang sudah diinput
+  // Saring mata pelajaran
   const classSubjects = React.useMemo(() => {
-    // 1. Mapel yang diset ada guru pengampunya di kelas ini
     const assignedSubjectIds = new Set<string>();
     if (assignments && assignments.length > 0) {
       assignments.forEach((a) => {
@@ -72,7 +70,6 @@ export const SingleStudentRapor: React.FC<{
       });
     }
 
-    // 2. Mapel yang sudah memiliki nilai diinput untuk siswa ini atau untuk kelas ini
     const gradedSubjectIds = new Set<string>();
     grades.forEach((g) => {
       if (
@@ -86,17 +83,14 @@ export const SingleStudentRapor: React.FC<{
       }
     });
 
-    // Saring mata pelajaran
     const filtered = subjects.filter(
       (s) => assignedSubjectIds.has(s.id) || gradedSubjectIds.has(s.id)
     );
 
-    // Jika ditemukan mapel yang diset mengajar atau bernilai di kelas ini, gunakan hasil filter
     if (filtered.length > 0) {
       return filtered;
     }
 
-    // Fallback cadangan jika belum ada data penugasan sama sekali di sistem
     return assignedSubjectIds.size > 0 || gradedSubjectIds.size > 0 ? filtered : subjects;
   }, [assignments, classroom.id, academicYear.id, academicYear.semester, grades, student.id, subjects]);
 
@@ -184,12 +178,9 @@ export const SingleStudentRapor: React.FC<{
         <table className="w-full border-collapse border border-black text-[10px]">
           <thead>
             <tr className="bg-slate-100 text-slate-900 font-bold text-center border-b border-black">
-              <th className="border border-black px-1.5 py-1.5 w-7">No</th>
-              <th className="border border-black px-2 py-1.5 text-left">Mata Pelajaran</th>
-              <th className="border border-black px-1 py-1.5 w-12">KKTP / KKM</th>
-              <th className="border border-black px-1 py-1.5 w-12">Nilai PTS</th>
-              <th className="border border-black px-1 py-1.5 w-10">Predikat</th>
-              <th className="border border-black px-2 py-1.5 text-left">Deskripsi Capaian Kompetensi</th>
+              <th className="border border-black px-1.5 py-1.5 w-10">No</th>
+              <th className="border border-black px-3 py-1.5 text-left">Mata Pelajaran</th>
+              <th className="border border-black px-2 py-1.5 w-24">Nilai PTS</th>
             </tr>
           </thead>
           <tbody>
@@ -197,7 +188,7 @@ export const SingleStudentRapor: React.FC<{
             {kelA.length > 0 && (
               <>
                 <tr className="bg-slate-50 font-bold border-b border-black text-slate-900">
-                  <td colSpan={6} className="border border-black px-2 py-1">
+                  <td colSpan={3} className="border border-black px-2 py-1">
                     {titleKelA}
                   </td>
                 </tr>
@@ -208,13 +199,8 @@ export const SingleStudentRapor: React.FC<{
                     <tr key={sub.id} className="border-b border-black">
                       <td className="border border-black text-center py-1 font-medium">{idx + 1}</td>
                       <td className="border border-black px-2 py-1 font-semibold">{sub.name}</td>
-                      <td className="border border-black text-center py-1 font-medium">{sub.kkm}</td>
                       <td className={`border border-black text-center py-1 font-bold ${isUnderKKTP ? 'text-red-700 bg-red-50/50' : ''}`}>
                         {g?.score !== undefined ? g.score : '-'}
-                      </td>
-                      <td className="border border-black text-center py-1 font-bold">{g?.predicate || '-'}</td>
-                      <td className="border border-black px-2 py-1 leading-snug text-[9.5px]">
-                        {g?.competencyNote || '-'}
                       </td>
                     </tr>
                   );
@@ -226,7 +212,7 @@ export const SingleStudentRapor: React.FC<{
             {kelB.length > 0 && (
               <>
                 <tr className="bg-slate-50 font-bold border-b border-black text-slate-900">
-                  <td colSpan={6} className="border border-black px-2 py-1">
+                  <td colSpan={3} className="border border-black px-2 py-1">
                     {titleKelB}
                   </td>
                 </tr>
@@ -237,13 +223,8 @@ export const SingleStudentRapor: React.FC<{
                     <tr key={sub.id} className="border-b border-black">
                       <td className="border border-black text-center py-1 font-medium">{idx + 1}</td>
                       <td className="border border-black px-2 py-1 font-semibold">{sub.name}</td>
-                      <td className="border border-black text-center py-1 font-medium">{sub.kkm}</td>
                       <td className={`border border-black text-center py-1 font-bold ${isUnderKKTP ? 'text-red-700 bg-red-50/50' : ''}`}>
                         {g?.score !== undefined ? g.score : '-'}
-                      </td>
-                      <td className="border border-black text-center py-1 font-bold">{g?.predicate || '-'}</td>
-                      <td className="border border-black px-2 py-1 leading-snug text-[9.5px]">
-                        {g?.competencyNote || '-'}
                       </td>
                     </tr>
                   );
@@ -255,7 +236,7 @@ export const SingleStudentRapor: React.FC<{
             {kelC.length > 0 && (
               <>
                 <tr className="bg-slate-50 font-bold border-b border-black text-slate-900">
-                  <td colSpan={6} className="border border-black px-2 py-1">
+                  <td colSpan={3} className="border border-black px-2 py-1">
                     {titleKelC}
                   </td>
                 </tr>
@@ -266,13 +247,8 @@ export const SingleStudentRapor: React.FC<{
                     <tr key={sub.id} className="border-b border-black">
                       <td className="border border-black text-center py-1 font-medium">{idx + 1}</td>
                       <td className="border border-black px-2 py-1 font-semibold">{sub.name}</td>
-                      <td className="border border-black text-center py-1 font-medium">{sub.kkm}</td>
                       <td className={`border border-black text-center py-1 font-bold ${isUnderKKTP ? 'text-red-700 bg-red-50/50' : ''}`}>
                         {g?.score !== undefined ? g.score : '-'}
-                      </td>
-                      <td className="border border-black text-center py-1 font-bold">{g?.predicate || '-'}</td>
-                      <td className="border border-black px-2 py-1 leading-snug text-[9.5px]">
-                        {g?.competencyNote || '-'}
                       </td>
                     </tr>
                   );
@@ -283,65 +259,15 @@ export const SingleStudentRapor: React.FC<{
         </table>
       </div>
 
-      {/* 4. TABEL KEHADIRAN (KETIDAKHADIRAN) & CATATAN WALI KELAS */}
-      <div className="grid grid-cols-12 gap-3 my-3 text-[10px]">
-        {/* Kolom Kiri: Tabel Ketidakhadiran */}
-        <div className="col-span-5">
-          <table className="w-full border-collapse border border-black text-[10px]">
-            <thead>
-              <tr className="bg-slate-100 border-b border-black text-center font-bold">
-                <th colSpan={2} className="border border-black px-2 py-1 text-left">
-                  Ketidakhadiran
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="border-b border-black">
-                <td className="border border-black px-2 py-1 font-medium">Sakit</td>
-                <td className="border border-black text-center py-1 w-16 font-bold">
-                  {evaluation?.sickDays !== undefined ? evaluation.sickDays : 0} hari
-                </td>
-              </tr>
-              <tr className="border-b border-black">
-                <td className="border border-black px-2 py-1 font-medium">Izin</td>
-                <td className="border border-black text-center py-1 w-16 font-bold">
-                  {evaluation?.permittedDays !== undefined ? evaluation.permittedDays : 0} hari
-                </td>
-              </tr>
-              <tr className="border-b border-black">
-                <td className="border border-black px-2 py-1 font-medium">Tanpa Keterangan</td>
-                <td className="border border-black text-center py-1 w-16 font-bold">
-                  {evaluation?.unexcusedDays !== undefined ? evaluation.unexcusedDays : 0} hari
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        {/* Kolom Kanan: Catatan Wali Kelas */}
-        <div className="col-span-7">
-          <div className="border border-black p-2 h-full flex flex-col justify-between">
-            <div>
-              <div className="font-bold uppercase tracking-wider text-[9.5px] border-b border-slate-300 pb-0.5 mb-1 text-slate-800">
-                Catatan Wali Kelas
-              </div>
-              <p className="italic text-[10px] leading-relaxed text-slate-900">
-                "{evaluation?.homeroomNotes || 'Tingkatkan ketekunan belajar dan pertahankan prestasi di tengah semester.'}"
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 5. TANDA TANGAN (LEGALITAS RAPOR) */}
-      <div className="mt-5 text-[10.5px] break-inside-avoid">
+      {/* 4. TANDA TANGAN (LEGALITAS RAPOR) */}
+      <div className="mt-8 text-[10.5px] break-inside-avoid space-y-6">
         {/* Baris Tanggal */}
-        <div className="flex justify-end mb-1 pr-6">
+        <div className="flex justify-end pr-6">
           <span>{printSettings.printDate || 'Sukoharjo, 27 September 2024'}</span>
         </div>
 
-        {/* 3 Kolom Tanda Tangan: Orang Tua/Wali, Wali Kelas, Kepala Sekolah */}
-        <div className="grid grid-cols-3 text-center gap-4 pt-1">
+        {/* Baris 1: Orang Tua / Wali Siswa & Wali Kelas */}
+        <div className="grid grid-cols-2 text-center gap-8">
           {/* Kolom 1: Orang Tua / Wali Siswa */}
           <div className="flex flex-col justify-between h-24">
             <div>Mengetahui,<br />Orang Tua / Wali Siswa</div>
@@ -359,14 +285,14 @@ export const SingleStudentRapor: React.FC<{
               <div className="text-[9.5px]">NIP. {printSettings.homeroomTeacherNIP || '-'}</div>
             </div>
           </div>
+        </div>
 
-          {/* Kolom 3: Kepala Sekolah */}
-          <div className="flex flex-col justify-between h-24">
-            <div>Mengetahui,<br />Kepala Sekolah</div>
-            <div>
-              <div className="font-bold underline uppercase">{printSettings.principalName || schoolProfile.principalName || 'Drs. Andreas Setiawan, M.Pd.'}</div>
-              <div className="text-[9.5px]">NIP. {printSettings.principalNIP || schoolProfile.principalNIP || '-'}</div>
-            </div>
+        {/* Baris 2: Kepala Sekolah (Posisi Tengah di Bawah) */}
+        <div className="flex flex-col items-center justify-between h-24 text-center pt-2">
+          <div>Mengetahui,<br />Kepala Sekolah</div>
+          <div>
+            <div className="font-bold underline uppercase">{printSettings.principalName || schoolProfile.principalName || 'Drs. Andreas Setiawan, M.Pd.'}</div>
+            <div className="text-[9.5px]">NIP. {printSettings.principalNIP || schoolProfile.principalNIP || '-'}</div>
           </div>
         </div>
       </div>
