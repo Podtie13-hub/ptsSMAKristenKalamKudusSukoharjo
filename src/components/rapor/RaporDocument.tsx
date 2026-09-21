@@ -134,7 +134,7 @@ export const SingleStudentRapor: React.FC<{
         </div>
       </div>
 
-      {/* 2. BIODATA SISWA (HANYA NAMA, NIS/NISN, KELAS, DAN FASE) */}
+      {/* 2. BIODATA SISWA */}
       <div className="grid grid-cols-2 text-[10.5px] gap-x-6 gap-y-1 my-3 px-1 leading-relaxed border-b border-slate-300 pb-2">
         <div className="space-y-1">
           <div className="flex">
@@ -251,25 +251,27 @@ export const SingleStudentRapor: React.FC<{
 
       {/* 4. TANDA TANGAN (LEGALITAS RAPOR) */}
       <div className="mt-8 text-[10.5px] break-inside-avoid space-y-6">
-        {/* Baris Tanggal */}
-        <div className="flex justify-end pr-6">
-          <span>{printSettings.printDate || 'Sukoharjo, 27 September 2024'}</span>
-        </div>
-
-        {/* Baris 1: Orang Tua / Wali Siswa & Wali Kelas */}
+        {/* Baris 1: Orang Tua / Wali Siswa & Wali Kelas (dengan Tanggal Rata Tengah di atas Wali Kelas) */}
         <div className="grid grid-cols-2 text-center gap-8">
           {/* Kolom 1: Orang Tua / Wali Siswa */}
-          <div className="flex flex-col justify-between h-24">
-            <div>Mengetahui,<br />Orang Tua / Wali Siswa</div>
+          <div className="flex flex-col justify-between h-32">
+            <div>
+              {/* Penyeimbang tata letak agar tinggi kolom sejajar */}
+              <div className="mb-1 opacity-0 select-none">{printSettings.printDate || 'Sukoharjo, 27 September 2024'}</div>
+              <div>Mengetahui,<br />Orang Tua / Wali Siswa</div>
+            </div>
             <div>
               <div className="border-b border-black w-36 mx-auto"></div>
               <div className="text-[9.5px] text-slate-500 mt-0.5">(........................................)</div>
             </div>
           </div>
 
-          {/* Kolom 2: Wali Kelas */}
-          <div className="flex flex-col justify-between h-24">
-            <div>Wali Kelas,</div>
+          {/* Kolom 2: Tanggal & Wali Kelas */}
+          <div className="flex flex-col justify-between h-32">
+            <div>
+              <div className="mb-1">{printSettings.printDate || 'Sukoharjo, 27 September 2024'}</div>
+              <div>Wali Kelas,</div>
+            </div>
             <div>
               <div className="font-bold underline uppercase">{printSettings.homeroomTeacherName || 'Drs. Budi Santoso, M.Pd.'}</div>
               <div className="text-[9.5px]">NIP. {printSettings.homeroomTeacherNIP || '-'}</div>
