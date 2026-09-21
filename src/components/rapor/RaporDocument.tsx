@@ -134,7 +134,7 @@ export const SingleStudentRapor: React.FC<{
         </div>
       </div>
 
-      {/* 2. BIODATA SISWA */}
+      {/* 2. BIODATA SISWA (HANYA NAMA, NIS/NISN, KELAS, DAN FASE) */}
       <div className="grid grid-cols-2 text-[10.5px] gap-x-6 gap-y-1 my-3 px-1 leading-relaxed border-b border-slate-300 pb-2">
         <div className="space-y-1">
           <div className="flex">
@@ -147,28 +147,18 @@ export const SingleStudentRapor: React.FC<{
             <span className="w-3">:</span>
             <span className="font-mono text-slate-900">{student.nis} {student.nisn ? `/ ${student.nisn}` : ''}</span>
           </div>
+        </div>
+
+        <div className="space-y-1">
           <div className="flex">
             <span className="w-32 text-slate-700 font-medium">Kelas / Rombel</span>
             <span className="w-3">:</span>
             <span className="font-bold text-slate-900">{classroom.name}</span>
           </div>
-        </div>
-
-        <div className="space-y-1">
-          <div className="flex">
-            <span className="w-32 text-slate-700 font-medium">Nama Sekolah</span>
-            <span className="w-3">:</span>
-            <span className="font-bold text-slate-900 uppercase">{schoolProfile.name}</span>
-          </div>
           <div className="flex">
             <span className="w-32 text-slate-700 font-medium">Fase Kurikulum</span>
             <span className="w-3">:</span>
             <span className="font-bold text-slate-900">{classroom.fase || 'Fase E (Kelas X)'}</span>
-          </div>
-          <div className="flex">
-            <span className="w-32 text-slate-700 font-medium">Semester</span>
-            <span className="w-3">:</span>
-            <span className="font-bold text-slate-900">{academicYear.semester}</span>
           </div>
         </div>
       </div>
